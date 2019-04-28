@@ -1,0 +1,268 @@
+#!/usr/bin/env python3
+
+"""
+Title: Advanced Git Tool Main Source Code.
+Author: bl4ckbo7
+Twitter: @0x616e6479
+Date: Mon April 27, 2019
+"""
+
+try:
+
+    import os
+    import git
+    import sys
+    import argparse
+    import textwrap
+    import requests
+    import consolemd
+    from core.conf import Conf
+    from core.show import Show
+    from core.search import Search
+    from core.clone import Clone
+
+except ImportError:
+    print("\n[x] Oops! Can't find module, or can't find name in module!")
+    sys.exit(1)
+
+if sys.version_info[0] < 3: #This code runs with Python 3 ONLY.
+    print("\n[x] This code runs with Python 3 only!")
+    sys.exit(1)
+
+try:
+    assert ('linux' in sys.platform) #This code runs on Linux Platform ONLY
+
+except AssertionError:
+    print("\n[x] This code runs on Linux Platform only!")
+    sys.exit(1)
+
+#check if paths ~/.agt , ~/.agt/clones/ and ~/.agt/temp/ exist
+if os.path.exists(os.path.expanduser('~/.agt')) == True:
+    if os.path.exists(os.path.expanduser(Conf.DEFAULTS['OUTPUT_DIR'])) == False:
+        os.mkdir(os.path.expanduser('~/.agt/clones'))
+
+    elif os.path.exists(os.path.expanduser(Conf.DEFAULTS['TEMP_DIR'])) == False:
+        os.mkdir(os.path.expanduser('~/.agt/temp'))
+        open(Conf.DEFAULTS['TEMP_DIR'] + 'important.txt', 'w+').write('PlEASE, DO NOT DELETE THIS DIRECTORY.')
+
+    else:
+        pass
+
+else:
+    os.mkdir(os.path.expanduser('~/.agt'))
+    os.mkdir(os.path.expanduser('~/.agt/clones'))
+    os.mkdir(os.path.expanduser('~/.agt/temp'))
+    open(os.path.expanduser(Conf.DEFAULTS['TEMP_DIR'] + 'important.txt'), 'w+').write('PlEASE, DO NOT DELETE THIS DIRECTORY.\n')
+
+def main():
+    
+    try:
+
+        #Processing commandline arguments
+        parser = argparse.ArgumentParser(prog="./agt", formatter_class=argparse.RawDescriptionHelpFormatter,
+                                        description=textwrap.dedent('''\
+                                            agt {} ({})
+
+                                            Advanced Git Tool - agt
+                                            -----------------------
+                                            agt is a commandline advanced git tool and provides commands for
+                                            searching and cloning as well as querying information about repositories.
+                                            It provides the same cloning functionality as Git tool, but enables fastest 
+                                            and parallel clone processing. Takes input from either stdin or filein to clone 
+                                            the repositories.
+
+                                            Most Common Commands:
+                                            ------------
+                                                search - search repositories based on either repository name or topic name.
+                                                show   - show repository details and its contents. Optionally view README file and/or clone repository.
+                                                clone  - clone repositories. Reads input from text file or list of arguments.
+
+                                                NOTE: Above commands have their specific options.
+                                                -----
+                                                
+                                                Usage: agt command <argument> [options]
+                                                ------
+
+                                                See help:
+                                                ---------
+                                                    agt -h, --help               Help message on agt.
+                                                    agt command -h, --help       Help message on specific command.
+                                            '''.format(Conf.MISC['VERSION'], Conf.MISC['STAGE'])), epilog=textwrap.dedent('''\
+                                            ------------------------------------------------------------------------------------------------------------
+                                                Author: bl4ckbo7 | Twitter: @0x616e6479 | (c)2019
+                                            ------------------------------------------------------------------------------------------------------------    
+                                            '''))
+
+        parser.add_argument("-v", "--version", action="version", version="%(prog)s {} ({})".format(Conf.MISC['VERSION'], Conf.MISC['STAGE']))
+
+        subparsers = parser.add_subparsers(help="Advanced Git Tool Commands", dest="command")
+
+        #A search command : Search in repositories.
+        default_search_parser = subparsers.add_parser("search", help="Search repositories.")
+        default_search_parser.add_argument("query", action="store", help="Query string to search.")
+        default_search_parser.add_argument("-t", "--topic", help="Search by topic.", dest="topic", action="store_true", default=False)
+        default_search_parser.add_argument("-s", "--sort", help="Choose the sort type to sort results. Allowed values are: stars, forks, updated.", dest="sort", choices=['stars','forks', 'updated'], default=Conf.DEFAULTS['SORT_FILTER'], metavar="")
+        default_search_parser.add_argument("-o", "--order", help="Choose the order type to order results. Allowed values are: asc, desc.", dest="order", choices=['asc', 'desc'], default=Conf.DEFAULTS['ORDER_FILTER'], metavar="")
+        default_search_parser.add_argument("-c", "--clone", help="Clone the repository.", dest="clone", action="store_true", default=False)
+        default_search_parser.add_argument("-r", "--results", help="Results listed per page.", dest="per_page", action="store", default=Conf.DEFAULTS['RESULTS_PER_PAGE'])
+        default_search_parser.add_argument("-p", "--page", help="Page number.", dest="page_no", action="store", default=Conf.DEFAULTS['DEFAULT_PAGE_NUMBER'])
+
+        #A show command : Show repository details.
+        show_parser = subparsers.add_parser("show", help="Show repository details.")
+        show_parser.add_argument("query", action="store", help="Full repository name | SYNTAX: <owner>/<repository_name> | e.g: bl4ckbo7/agt")
+        show_parser.add_argument("-r", "--readme", action="store_true", help="Render this repository's README document on the terminal.", dest="readme", default=False)
+        show_parser.add_argument("-c", "--clone", action="store_true", help="Clone the repository.", dest="clone", default=False)
+
+        #A clone command : Clone repositories.
+        clone_parser = subparsers.add_parser("clone", help="Clone repositories.")
+        clone_group = clone_parser.add_mutually_exclusive_group()
+        clone_group.add_argument("-f", "--file", action="store", help="Read full repository names from file. Not allowed with --list.", dest="file")
+        clone_group.add_argument("-l", "--list", nargs="+", help="Type full repository names leaving blank space in between them. Not allowed with --file.", dest="repolist", default=[])
+        
+        vals = parser.parse_args()
+
+        if vals.command == "search":
+
+            #Assigning values from commandline arguments
+            query = vals.query
+            page_no = vals.page_no #Default Page Number = 1
+            per_page = vals.per_page #Results listed per page
+            sort_type = vals.sort
+            order_type = vals.order
+            clone = vals.clone
+            topic = vals.topic
+
+            s = Search(query, page_no, per_page, sort_type, order_type)
+
+            if topic:
+                results = s.search("TOPIC")
+            else:
+                results = s.search("DEFAULT")
+
+            s.printRepositoryResults(results)
+
+            result_items = s.getAllRepositories(results)
+
+            if results['total_count'] < int(s.per_page):
+                total_repositories = int(results['total_count'])
+            else:
+                total_repositories = int(s.per_page)
+
+            print("\n")
+            
+            if total_repositories > 0:
+                cont = True
+            else:
+                cont = False
+                print("[!] Search not found!")
+
+            if clone:
+                while cont:
+
+                    repo_id = int(input("[?] Select the ID ( 1 - " + str(total_repositories) + " ) of the repository you want: "))
+                    if repo_id > total_repositories or repo_id < 1 or type(repo_id) != int:
+                        print("[x] Sorry, the ID is incorrect. Try again!\n")
+                        opt = input("[?] Enter (c)-Continue or (q)-Quit: ")
+                        if opt == "q":
+                            exit(0)
+                        else:
+                            pass
+                        cont = True
+                    else:
+                        cont = False
+
+
+                if total_repositories > 0:
+                    repolist = []
+                    repolist.append(result_items[repo_id - 1]['full_name'])
+                    clone = Clone()
+                    clone.cpu(repolist)
+                else:
+                    pass
+
+                sys.exit(0)
+            else:
+                print("[!] Search Completed!")
+                sys.exit(0)
+                pass
+        
+        elif vals.command == "show":
+            full_name = vals.query
+            print_readme = vals.readme
+            clone = vals.clone
+
+            #check if the full name is valid
+            names = full_name.split("/")
+            
+            if len(names) < 2:
+                print("[x] '{}', incorrect full name syntax. SYNTAX: <user>/<repository name>".format(full_name))
+                sys.exit(0)
+            else:
+                pass
+
+            showObj = Show(full_name)
+            repoDetails = showObj.getRepositoryDetails()
+            repoContents = showObj.getRepositoryContents()
+
+            print("[+] Owner: " + repoDetails['owner']['login'] + ".")
+            print("[+] Repository Name: " + repoDetails['name'] + ".")
+            print("[+] Description: " + repoDetails['description'] + ".")
+            print("[+] Size: " + str(repoDetails['size']) + " KB")
+            print("[+] Stars: " + str(repoDetails['stargazers_count']) + ".")
+            print("[+] Forks: " + str(repoDetails['forks_count']) + ".")
+            print("[+] Watchers: " + str(repoDetails['watchers']) + ".") 
+            print("[+] Languages used: ")
+            for language in repoDetails['languages'].items():
+                print("      [+] {}".format(language))
+
+            showObj.printRepositoryContents(repoContents)
+
+            if print_readme:
+                showObj.getREADME()
+                showObj.parseREADME()
+                print("\n")
+            
+            if clone:
+                repoDetails = showObj.getRepositoryDetails()
+                clone = Clone()
+                clone.cpu(repoDetails['full_name'])
+                sys.exit(0)
+
+        elif vals.command == "clone":
+            listfile = vals.file
+            repolist = vals.repolist
+            
+            clone = Clone()
+            
+            if listfile != None:
+                repolist = clone.parseListFile(listfile)
+                clone.cpu(repolist)
+                print("\n")
+                sys.exit(0)
+
+            elif repolist != []:
+                clone.cpu(repolist)
+                sys.exit(0)
+
+            else:
+                parser.print_help()
+                sys.exit(0)
+        else:
+            parser.print_help()
+            sys.exit(0)
+
+    except KeyboardInterrupt:
+        
+        print("\n[!] Exited!")
+
+    except ValueError:
+
+        print("\n[x] You have entered Incorrect Value!")
+
+    except requests.exceptions.RequestException:
+        
+        print("\n[x] Connection error! Check if you have a working Internet connection.")
+
+
+if __name__ == "__main__":
+    main()
