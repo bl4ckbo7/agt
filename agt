@@ -22,43 +22,48 @@ try:
     from core.search import Search
     from core.clone import Clone
 
-except ImportError:
-    print("\n[x] Oops! Can't find module, or can't find name in module!")
-    sys.exit(1)
+    #This code runs with Python 3 ONLY.
+    if sys.version_info[0] < 3: 
+        print("\n[x] This code runs with Python 3 only!")
+        sys.exit(1)
+    
+    #This code runs on Linux Platform ONLY
+    assert ('linux' in sys.platform) 
 
-if sys.version_info[0] < 3: #This code runs with Python 3 ONLY.
-    print("\n[x] This code runs with Python 3 only!")
-    sys.exit(1)
+    #check if paths ~/.agt , ~/.agt/clones/ and ~/.agt/temp/ exist
+    if os.path.exists(os.path.expanduser('~/.agt')) == True:
+        if os.path.exists(os.path.expanduser(Conf.DEFAULTS['OUTPUT_DIR'])) == False:
+            os.mkdir(os.path.expanduser('~/.agt/clones'))
 
-try:
-    assert ('linux' in sys.platform) #This code runs on Linux Platform ONLY
+        elif os.path.exists(os.path.expanduser(Conf.DEFAULTS['TEMP_DIR'])) == False:
+            os.mkdir(os.path.expanduser('~/.agt/temp'))
+            open(Conf.DEFAULTS['TEMP_DIR'] + 'important.txt', 'w+').write('PlEASE, DO NOT DELETE THIS DIRECTORY.')
 
-except AssertionError:
-    print("\n[x] This code runs on Linux Platform only!")
-    sys.exit(1)
-
-#check if paths ~/.agt , ~/.agt/clones/ and ~/.agt/temp/ exist
-if os.path.exists(os.path.expanduser('~/.agt')) == True:
-    if os.path.exists(os.path.expanduser(Conf.DEFAULTS['OUTPUT_DIR'])) == False:
-        os.mkdir(os.path.expanduser('~/.agt/clones'))
-
-    elif os.path.exists(os.path.expanduser(Conf.DEFAULTS['TEMP_DIR'])) == False:
-        os.mkdir(os.path.expanduser('~/.agt/temp'))
-        open(Conf.DEFAULTS['TEMP_DIR'] + 'important.txt', 'w+').write('PlEASE, DO NOT DELETE THIS DIRECTORY.')
+        else:
+            pass
 
     else:
-        pass
+        os.mkdir(os.path.expanduser('~/.agt'))
+        os.mkdir(os.path.expanduser('~/.agt/clones'))
+        os.mkdir(os.path.expanduser('~/.agt/temp'))
+        open(os.path.expanduser(Conf.DEFAULTS['TEMP_DIR'] + 'important.txt'), 'w+').write('PlEASE, DO NOT DELETE THIS DIRECTORY.\n')
 
-else:
-    os.mkdir(os.path.expanduser('~/.agt'))
-    os.mkdir(os.path.expanduser('~/.agt/clones'))
-    os.mkdir(os.path.expanduser('~/.agt/temp'))
-    open(os.path.expanduser(Conf.DEFAULTS['TEMP_DIR'] + 'important.txt'), 'w+').write('PlEASE, DO NOT DELETE THIS DIRECTORY.\n')
+except ImportError:
+        print("\n[x] Oops! Can't find module, or can't find name in module!")
+        sys.exit(1)
+
+except AssertionError:
+        print("\n[x] This code runs on Linux Platform only!")
+        sys.exit(1)
+
+except KeyboardInterrupt:
+        print("\n[!] Exited!")
+        sys.exit(1)
+
 
 def main():
     
     try:
-
         #Processing commandline arguments
         parser = argparse.ArgumentParser(prog="./agt", formatter_class=argparse.RawDescriptionHelpFormatter,
                                         description=textwrap.dedent('''\
