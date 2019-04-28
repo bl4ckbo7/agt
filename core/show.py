@@ -5,7 +5,6 @@ Title: Search Module for Advanced Git Tool
 Author: bl4ckbo7
 Twitter: @0x616e6479
 Date: Mon April 22, 2019
-Dependency: sudo apt-get install python3-texttable	Install python3 texttable package
 
 --------------------------------------------------------------------
 
