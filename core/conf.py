@@ -30,4 +30,3 @@ class Conf:
                 'VERSION' : '1.0.1',
                 'STAGE' : 'stable'
         }
-        
