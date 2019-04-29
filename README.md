@@ -21,20 +21,20 @@
 
 ### Features
 
-### Search
+#### Search
 Agt can search any keyword including topic names so as to find matching repositories.
 - Agt allows sorting search results.
 - Agt provides pagination of search results.
 - Agt provides ordering search results.
 - Agt provides flexibility to display results of different pages. Allows you to select any page to read results from.
 
-### Show
+#### Show
 Agt can show details and contents of any repository.
 - Agt collects full contents of repository and it's respective details.
 - Agt provides rendering for repository's README document.
 - Agt provides an option to clone the shown repository.
 
-### Clone
+#### Clone
 Agt can clone multiple repositories even faster and saves them in the default output directory.
 - Agt provides a functionality to read a list of repositories from a text file and clone them.
 - Agt takes a list of repositories from the commandline argument and clone each of them.
