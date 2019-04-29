@@ -37,7 +37,7 @@ Agt can show details and contents of any repository.
 ### Clone
 Agt can clone multiple repositories even faster and saves them in the default output directory.
 - Agt provides a functionality to read a list of repositories from a text file and clone them.
-- Agt takes a list of repositories drom the argument and clone them.
+- Agt takes a list of repositories from the commandline argument and clone each of them.
 
 ### Contribution & License
 You can contribute in following ways:
