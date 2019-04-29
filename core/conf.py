@@ -7,6 +7,7 @@ Twitter: @0x616e6479
 Date: Sat April 27, 2019
 """
 
+
 class Conf:
 
         URLS = {
@@ -16,16 +17,16 @@ class Conf:
         }
 
         DEFAULTS = {
-                'OUTPUT_DIR' : '~/.agt/clones/',
-                'TEMP_DIR' : '~/.agt/temp/',
+                'OUTPUT_DIR' : '~/.agt/clones/', #Default clones output directory.
+                'TEMP_DIR' : '~/.agt/temp/', #Default temporary storage direactory
                 'RESULTS_PER_PAGE' : '32',
                 'DEFAULT_PAGE_NUMBER' : '1',
                 'QUERY_TYPE' : 'DEFAULT',
-                'SORT_FILTER' : '', #Best Match
-                'ORDER_FILTER' : 'desc'
+                'SORT_FILTER' : '',        #|---Best match,
+                'ORDER_FILTER' : 'desc'    #|---when combined together.
         }
 
         MISC = {
-                'VERSION' : '1.0',
+                'VERSION' : '1.0.1',
                 'STAGE' : 'stable'
         }
