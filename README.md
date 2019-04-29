@@ -11,4 +11,3 @@
 </p>
 
 <img alt="agt Demo" src="https://raw.githubusercontent.com/bl4ckbo7/agt/master/screenshots/agt_help.png">
-<img alt="agt Demo" src="https://raw.githubusercontent.com/bl4ckbo7/agt/master/screenshots/agt_help2.png">
